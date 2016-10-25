@@ -42,11 +42,11 @@ class Chaser : public Effect {
     color_change_t( 20*Num_pixels )
       {};
   virtual uint32_t base_color( long t ) {
-    return 0xFF0000 >> ((t/color_change_t) % 3);
+    return 0xFF0000 >> ((t/color_change_t) % 3)*8;
   };
   int head(long t) {
     return (t % (20 * Num_pixels)) / Num_pixels;
-  }
+  };
   virtual uint32_t color( int pixel, long t ) {
     int the_head = head(t);
     int tail = the_head - length;
@@ -57,7 +57,29 @@ class Chaser : public Effect {
     }
   };
 };
-  
+
+
+class Pummer : public Effect {
+public:
+  int fade_duration;
+  Pummer( Adafruit_DotStar new_strip, int new_fade_duration):
+    Effect(new_strip),
+    fade_duration(new_fade_duration)
+  {};
+
+  virtual uint32_t base_color(long t) {
+    return 0xFF0000 >> ((t / fade_duration)%3)*8;
+  };
+  virtual uint32_t color(int pixel, long t) {
+    uint32_t c = base_color(t);
+    //now fade each component
+    int in_fade = (t % fade_duration);
+    uint32_t c1 = ((long)(c & 0xff) * in_fade) / fade_duration;
+    uint32_t c2 = (((long)(c >> 8) & 0xff) * in_fade) / fade_duration;
+    uint32_t c3 = (((long)(c >> 16) & 0xff) * in_fade) / fade_duration;
+    return ( (c3 << 16) | (c2 << 8) | (c1) );
+  };
+};
 
 Adafruit_DotStar strip = Adafruit_DotStar(Num_pixels, Data_pin, Clock_pin, DOTSTAR_BRG);
 
